@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap');
+
+@theme inline {
+  --color-navy: #181f6b;
+  --color-cyan: #00b8e4;
+  --color-ink: #101c32;
+  --color-muted-ink: #637087;
+  --color-canvas: #f7f9fc;
+  --color-line: #e3e8f0;
+  --color-link: #087e9c;
+  --color-tint: #e9f8fd;
+  --color-success: #168064;
+  --color-success-bg: #eaf7f1;
+  --color-warning: #99620a;
+  --color-warning-bg: #fff5df;
+  --color-danger: #bd3e4b;
+  --color-danger-bg: #fff0f1;
+}
+
+.airank-overview {
+  --background: 216 50% 98%;
+  --foreground: 219 52% 13%;
+  --border: 217 32% 92%;
+  --card: 0 0% 100%;
+  --card-foreground: 219 52% 13%;
+  --card-border: 217 32% 92%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 219 52% 13%;
+  --popover-border: 217 32% 92%;
+  --primary: 235 63% 26%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 100%;
+  --secondary-foreground: 219 52% 13%;
+  --muted: 216 50% 98%;
+  --muted-foreground: 218 15% 46%;
+  --accent: 195 87% 95%;
+  --accent-foreground: 235 63% 26%;
+  --destructive: 354 51% 49%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 217 32% 92%;
+  --ring: 192 100% 45%;
+  --chart-1: 235 63% 26%;
+  --chart-2: 192 100% 45%;
+  --chart-3: 218 15% 46%;
+  --chart-4: 164 71% 29%;
+  --chart-5: 37 88% 32%;
+  --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --app-font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --radius: 0.5rem;
+  color: #101c32;
+  font-family: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+}
+
+.airank-overview .tabular { font-variant-numeric: tabular-nums; }
+.airank-overview .ar-rise { animation: airank-rise 320ms cubic-bezier(.2,.7,.2,1) both; }
+.airank-overview .ar-rise-1 { animation-delay: 40ms; }
+.airank-overview .ar-rise-2 { animation-delay: 80ms; }
+.airank-overview .ar-skeleton { position: relative; overflow: hidden; background: #eef2f7; border-radius: 6px; }
+.airank-overview .ar-skeleton::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: airank-shimmer 1.4s infinite; }
+.airank-overview .ar-hatch { background-image: repeating-linear-gradient(135deg, rgba(99,112,135,.07) 0 6px, transparent 6px 12px); }
+@keyframes airank-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes airank-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .airank-overview *, .airank-overview *::before, .airank-overview *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

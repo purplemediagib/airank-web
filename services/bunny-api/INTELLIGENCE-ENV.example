@@ -1,0 +1,8 @@
+# Leave disabled until the operator chooses to authorize recurring analysis.
+# Set the SAME feature flag/model on API and worker; existing OpenAI credential
+# must be present on worker. Do not copy credentials into this file.
+ENTITY_ANALYSIS_ENABLED=false
+ENTITY_ANALYSIS_MODEL=gpt-4.1-mini-2025-04-14
+ENTITY_ANALYSIS_MAX_DAILY_CALLS=25
+# 0 pauses paid analysis. Calls include failed/interrupted requests.
+# Existing SENTIMENT_* and CONSUMER_* budgets are separate and unchanged.

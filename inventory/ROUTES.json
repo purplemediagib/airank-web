@@ -1,0 +1,37 @@
+{
+  "appRoutes": [
+    "/:locale/dashboard",
+    "/:locale/dashboard/content",
+    "/:locale/dashboard/content/*?",
+    "/:locale/dashboard/prompts",
+    "/:locale/dashboard/prompts/:id",
+    "/:locale/dashboard/results",
+    "/:locale/dashboard/results/:id",
+    "/:locale/dashboard/perception",
+    "/:locale/dashboard/competitors",
+    "/:locale/dashboard/competitors/:id",
+    "/:locale/dashboard/sources",
+    "/:locale/dashboard/traffic",
+    "/:locale/dashboard/evidence/:id",
+    "/:locale/dashboard/industries",
+    "/:locale/dashboard/industries/:id",
+    "/:locale/dashboard/opportunities",
+    "/:locale/dashboard/opportunities/:id",
+    "/:locale/dashboard/history",
+    "/:locale/dashboard/reports",
+    "/:locale/dashboard/reports/:id",
+    "/:locale/dashboard/traffic",
+    "/:locale/dashboard/methodology",
+    "/:locale/settings",
+    "/:locale/start",
+    "/:locale/dev/components",
+    "/:locale"
+  ],
+  "public": [
+    "/:locale/sign-in",
+    "/:locale/sign-up",
+    "/:locale/free-check/embed",
+    "/:locale/report/:token"
+  ],
+  "note": "Locale restricted to EN/FI. Content Studio also has nested routes in its feature source."
+}

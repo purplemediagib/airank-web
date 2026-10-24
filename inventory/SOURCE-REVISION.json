@@ -1,0 +1,19 @@
+{
+  "preparedAt": "2026-10-24T14:47:47.341902+00:00",
+  "workspaceHead": "4e7e353def5dc5c1863100dbb6741769e26c3c1e",
+  "includesCurrentWorkingTree": true,
+  "changedSourcePaths": [
+    "docs/lovable-migration/LOVABLE-MASTER-PROMPT.md",
+    "docs/lovable-migration/START-HERE.md",
+    "README.md",
+    "docs/lovable-migration/CONNECTIONS-AND-ENVIRONMENT.md",
+    "docs/lovable-migration/VALIDATION-AND-CUTOVER.md",
+    "scripts/prepare-private-source.py"
+  ],
+  "backendRepository": "https://github.com/purplemediagib/airank.me",
+  "backendRevision": "b34d7c39231dd1e85a37385627f72a47a8d3c09e",
+  "backendArchiveSha256": "0624e99def3dd7978fc028a2284dd430673a83e0c5126b0906da67a939337eac",
+  "backendVersion": "0.22.0",
+  "deploymentPerformed": false,
+  "destination": "https://github.com/purplemediagib/airank-web"
+}

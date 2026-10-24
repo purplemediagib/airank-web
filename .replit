@@ -1,0 +1,43 @@
+modules = ["nodejs-24", "python-base-3.13"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[userenv]
+
+[userenv.production]
+AIRANK_API_ORIGIN = "https://mc-u87t7nkvtg.bunny.run"
+AIRANK_OAUTH_CLIENT_ID = "app"
+AIRANK_PUBLIC_ORIGIN = "https://app.airank.me"
+
+[userenv.shared]
+GOOGLE_CONNECTOR_BASE_URL = "https://mc-kvj7j25914.bunny.run"
+GOOGLE_CONNECTOR_RETURN_URL = "https://app.airank.me/en/settings?tab=connections"
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 80
+
+[[ports]]
+localPort = 25438
+externalPort = 3000

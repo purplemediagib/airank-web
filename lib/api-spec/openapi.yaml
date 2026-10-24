@@ -1,0 +1,2017 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+paths:
+  /airank/v1/projects/{projectId}/connections/{service}: { $ref: "./google-connections.yaml#/paths/connection" }
+  /airank/v1/projects/{projectId}/connections/{service}/connect: { $ref: "./google-connections.yaml#/paths/connect" }
+  /airank/v1/projects/{projectId}/connections/{service}/properties: { $ref: "./google-connections.yaml#/paths/properties" }
+  /airank/v1/projects/{projectId}/connections/{service}/selection: { $ref: "./google-connections.yaml#/paths/selection" }
+  /airank/v1/projects/{projectId}/connections/{service}/sync: { $ref: "./google-connections.yaml#/paths/sync" }
+  /airank/v1/projects/{projectId}/connections/{service}/reports: { $ref: "./google-connections.yaml#/paths/reports" }
+  /public-check/v1/capabilities: { $ref: "./public-check.yaml#/paths/capabilities" }
+  /public-check/v1/prepare: { $ref: "./public-check.yaml#/paths/prepare" }
+  /public-check/v1/preview: { $ref: "./public-check.yaml#/paths/preview" }
+  /public-check/v1/scans: { $ref: "./public-check.yaml#/paths/scans" }
+  /public-check/v1/scans/{scanId}: { $ref: "./public-check.yaml#/paths/scan" }
+  /public-check/v1/scans/{scanId}/email: { $ref: "./public-check.yaml#/paths/email" }
+  /public-check/v1/deliveries/{requestId}: { $ref: "./public-check.yaml#/paths/delivery" }
+  /public-check/v1/reports/{token}: { $ref: "./public-check.yaml#/paths/report" }
+  /airank/v1/industries:
+    get:
+      operationId: listIndustries
+      responses:
+        "200":
+          description: Benchmark directory; admin flag is decided only by the server
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IndustryDirectory" }
+    post:
+      operationId: applyIndustryAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IndustryActionInput" }
+      responses:
+        "200":
+          description: Admin-only action result (403 for non-admins)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IndustryDirectory" }
+  /airank/v1/industries/{industryId}:
+    parameters:
+      - { name: industryId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getIndustry
+      responses:
+        "200":
+          description: Selected industry with latest report per panel
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IndustryDirectory" }
+  /airank/v1/projects/{projectId}/schedule:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getProjectSchedule
+      responses:
+        "200":
+          description: Project monitoring schedule
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectSchedule" }
+    patch:
+      operationId: updateProjectSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectScheduleInput" }
+      responses:
+        "200":
+          description: Updated schedule; 409 on stale version, 503 when scheduler not enabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectSchedule" }
+  /airank/v1/projects/{projectId}/opportunities:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listOpportunities
+      responses:
+        "200":
+          description: Owned evidence-backed opportunities
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Opportunity" } }
+    post:
+      operationId: refreshOpportunities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OpportunityRefreshInput" }
+      responses:
+        "200":
+          description: Deterministic rule refresh from stored analytics; no paid calls
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Opportunity" } }
+  /airank/v1/projects/{projectId}/opportunities/{opportunityId}:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: opportunityId, in: path, required: true, schema: { type: string } }
+    patch:
+      operationId: updateOpportunity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OpportunityUpdateInput" }
+      responses:
+        "200":
+          description: Updated opportunity; 409 on stale version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Opportunity" }
+  /airank/v1/projects/{projectId}/reports:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listReports
+      responses:
+        "200":
+          description: Owned report snapshots (metadata only)
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/ReportSummary" } }
+    post:
+      operationId: createReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportInput" }
+      responses:
+        "201":
+          description: Immutable persisted snapshot of all matching stored data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportDetail" }
+  /airank/v1/projects/{projectId}/reports/{reportId}:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: reportId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getReport
+      responses:
+        "200":
+          description: Owned snapshot; 410 when expired (30 days)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportDetail" }
+  /airank/v1/projects/{projectId}/measurement-settings:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getMeasurementSettings
+      responses:
+        "200":
+          description: Provider selection for future monitoring snapshots
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeasurementSettings" }
+    patch:
+      operationId: updateMeasurementSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeasurementSettingsInput" }
+      responses:
+        "200":
+          description: Updated selection; 409 on stale version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeasurementSettings" }
+  /airank/v1/projects/{projectId}/research:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getProjectResearch
+      responses:
+        "200":
+          description: Competitor cohort, read-only discovered candidates, cited sources and linked evidence
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Research" }
+    post:
+      operationId: applyResearchAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResearchInput" }
+      responses:
+        "200":
+          description: Persisted cohort decision; 409 when expectedVersion is stale
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Research" }
+  /airank/v1/projects/{projectId}/evidence/{evidenceId}:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: evidenceId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getEvidenceDetail
+      responses:
+        "200":
+          description: Owned observation with redacted immutable stored envelope
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvidenceDetail" }
+  /airank/v1/projects/{projectId}/results:
+    get:
+      operationId: listProjectResults
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: pageSize, in: query, schema: { type: integer } }
+        - { name: runId, in: query, schema: { type: string } }
+        - { name: promptId, in: query, schema: { type: string } }
+        - { name: provider, in: query, schema: { type: string } }
+        - { name: topic, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string } }
+        - { name: to, in: query, schema: { type: string } }
+        - { name: state, in: query, schema: { type: string } }
+        - { name: group, in: query, description: "Exact analytics composition group, or latest to resolve the default compatible group using the same measurement filters. Restricts exact selected task IDs, including unfinished tasks, before totals and pagination.", schema: { type: string } }
+        - { name: tag, in: query, schema: { type: string, maxLength: 40 } }
+        - { name: tags, in: query, description: "JSON-encoded array of up to 12 nonblank tag strings (40 characters each). Combined with legacy tag; matching uses frozen prompt tags.", schema: { type: string, maxLength: 1024 } }
+        - { name: tagMode, in: query, schema: { type: string, enum: [and, or], default: or } }
+        - { name: market, in: query, description: Frozen run market, schema: { type: string, pattern: "^[A-Z]{2}$" } }
+        - { name: language, in: query, description: Frozen run language independent of market, schema: { type: string, pattern: "^[a-z]{2}$" } }
+        - { name: surface, in: query, schema: { type: string } }
+        - { name: promptVersion, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        "200":
+          description: Owned paginated saved observations and unfinished monitoring tasks (0.11.0)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResultPage" }
+  /airank/v1/projects/{projectId}/results/{evidenceId}:
+    get:
+      operationId: getProjectResult
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string } }
+        - { name: evidenceId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: One owned observation/task returned directly (no wrapper)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResultItem" }
+  /airank/v1/projects/{projectId}/sentiment-backfill:
+    post:
+      operationId: requestSentimentBackfill
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SentimentBackfillInput" }
+      responses:
+        "200":
+          description: Explicit paid sentiment queueing for an existing run; existing jobs never repeated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SentimentBackfillResult" }
+  /airank/v1/projects/{projectId}/intelligence:
+    post:
+      operationId: updateProjectIntelligence
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntelligenceInput" }
+      responses:
+        "200":
+          description: Review updated or saved answers queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntelligenceMutation" }
+  /airank/v1/projects/{projectId}/analytics:
+    get:
+      operationId: getProjectAnalytics
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string } }
+        - { name: to, in: query, schema: { type: string } }
+        - { name: provider, in: query, schema: { type: string } }
+        - { name: topic, in: query, schema: { type: string } }
+        - { name: group, in: query, schema: { type: string } }
+        - { name: tag, in: query, schema: { type: string } }
+        - { name: tags, in: query, description: "JSON-encoded array of up to 12 nonblank tag strings (40 characters each). Combined with legacy tag; same matching applies to current and prior periods, evidence and all aggregates.", schema: { type: string, maxLength: 1024 } }
+        - { name: tagMode, in: query, schema: { type: string, enum: [and, or], default: or } }
+        - { name: market, in: query, description: Frozen run market, schema: { type: string, pattern: "^[A-Z]{2}$" } }
+        - { name: language, in: query, description: Frozen run language independent of market, schema: { type: string, pattern: "^[a-z]{2}$" } }
+        - { name: surface, in: query, schema: { type: string } }
+        - { name: runId, in: query, schema: { type: string } }
+        - { name: promptId, in: query, schema: { type: string } }
+        - { name: promptVersion, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        "200":
+          description: Complete-dataset owned monitoring analytics; incompatible groups never combined
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectAnalytics" }
+  /airank/v1/projects/{projectId}/prompts:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listTrackedPrompts
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: topic, in: query, schema: { type: string } }
+        - { name: tag, in: query, schema: { type: string } }
+        - { name: provider, in: query, schema: { type: string } }
+        - { name: outcome, in: query, schema: { type: string } }
+        - { name: sort, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: Owned filtered prompt page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrackedPromptPage" }
+    post:
+      operationId: createTrackedPrompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TrackedPromptInput" }
+      responses:
+        "201":
+          description: Created prompt
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrackedPrompt" }
+  /airank/v1/projects/{projectId}/prompts/{promptId}:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: promptId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getTrackedPrompt
+      responses:
+        "200":
+          description: Immutable versions and measurement history
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrackedPromptDetail" }
+    patch:
+      operationId: updateTrackedPrompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TrackedPromptUpdate" }
+      responses:
+        "200":
+          description: New version including archive or restore
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrackedPrompt" }
+  /airank/v1/projects/{projectId}/suggestions:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listPromptSuggestions
+      responses:
+        "200":
+          description: Persisted context-aware reviewed drafts; no generation on reads
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/PromptSuggestion" } }
+    post:
+      operationId: generatePromptSuggestions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmptyCommand" }
+      responses:
+        "200":
+          description: Persisted deduplicated suggestions, no monitoring started
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/PromptSuggestion" } }
+  /airank/v1/projects/{projectId}/suggestions/{suggestionId}:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: suggestionId, in: path, required: true, schema: { type: string } }
+    patch:
+      operationId: editPromptSuggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SuggestionEdit" }
+      responses:
+        "200":
+          description: Persisted pending draft edits; accepted/rejected drafts are immutable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PromptSuggestion" }
+    post:
+      operationId: reviewPromptSuggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SuggestionDecision" }
+      responses:
+        "200":
+          description: Explicit acceptance or rejection
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PromptSuggestion" }
+  /airank/v1/projects/{projectId}/monitoring-runs:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listMonitoringRuns
+      responses:
+        "200":
+          description: Owned runs, newest first
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/MonitoringRun" } }
+    post:
+      operationId: createMonitoringRun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MonitoringRunInput" }
+      responses:
+        "202":
+          description: Durable idempotent run, may be capacity-blocked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MonitoringRun" }
+  /airank/v1/projects/{projectId}/monitoring-runs/{runId}:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: runId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getMonitoringRun
+      responses:
+        "200":
+          description: Incremental actual coverage and immutable observations
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MonitoringRunDetail" }
+  /airank/v1/scans/preview:
+    post:
+      operationId: previewQuickCheck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuickCheckInput" }
+      responses:
+        "200":
+          description: Zero-call exact Finnish question preview
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuickCheckPreview" }
+  /airank/v1/scans:
+    post:
+      operationId: submitQuickCheck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuickCheckSubmission" }
+      responses:
+        "202":
+          description: Atomically queued and linked to owned project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuickCheckAccepted" }
+  /airank/v1/scans/{scanId}:
+    parameters:
+      - { name: scanId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getQuickCheck
+      responses:
+        "200":
+          description: Owned immutable evidence with authoritative score
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuickCheckReport" }
+  /airank/v1/projects/{projectId}/scans:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listProjectQuickChecks
+      responses:
+        "200":
+          description: Durable owned run lookup after refresh or uncertain submission
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/QuickCheckAccepted" }
+  /airank/v1/app/email/{action}:
+    parameters:
+      - name: action
+        in: path
+        required: true
+        schema: { type: string, enum: [sign-up, sign-in, verify, reset-request, reset] }
+    post:
+      operationId: emailAuthenticate
+      description: Same-origin JSON email authentication. Sign-up sends a code; verification creates the account. Sign-in and verification rotate the secure session. Password recovery revokes all old sessions. No automatic Google account linking.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailAuthInput"
+      responses:
+        "200":
+          description: Authenticated session, opaque email challenge, or completed password reset
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/AppSession" }
+                  - type: object
+                    required: [challengeId, expiresIn]
+                    properties:
+                      challengeId: { type: string }
+                      expiresIn: { type: integer }
+                  - type: object
+                    required: [ok]
+                    properties:
+                      ok: { type: boolean }
+        "400": { description: Incorrect or expired code }
+        "401": { description: Invalid credentials }
+        "403": { description: Invalid origin or request content type }
+        "409": { description: Email already belongs to an account; no automatic linking }
+        "422": { description: Invalid fields }
+        "429": { description: Persistent rate limit reached }
+        "503": { description: "Email authentication configuration, mail delivery or hashing capacity unavailable" }
+  /airank/v1/app/session:
+    get:
+      operationId: getAppSession
+      responses:
+        "200":
+          description: Authoritative session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AppSession" }
+  /airank/v1/app/logout:
+    post:
+      operationId: logoutApp
+      responses:
+        "200":
+          description: Session revoked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AppOk" }
+  /airank/v1/measurement-context:
+    get:
+      operationId: getMeasurementContext
+      responses:
+        "200":
+          description: Global market and prompt language catalogue
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeasurementContext" }
+  /airank/v1/website-profiles/capabilities:
+    get:
+      operationId: getWebsiteProfileCapabilities
+      responses:
+        "200":
+          description: Whether AI website autofill is enabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebsiteProfileCapabilities" }
+  /airank/v1/website-profiles:
+    post:
+      operationId: createWebsiteProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebsiteProfileRequest" }
+      responses:
+        "202":
+          description: Accepted owned website profile job
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebsiteProfileJob" }
+  /airank/v1/website-profiles/{jobId}:
+    parameters:
+      - { name: jobId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getWebsiteProfile
+      responses:
+        "200":
+          description: Owned website profile job
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebsiteProfileJob" }
+  /airank/v1/projects:
+    get:
+      operationId: listProjects
+      responses:
+        "200":
+          description: Owned projects including archived
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Project" }
+    post:
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectInput" }
+      responses:
+        "201":
+          description: Created owned project and immutable identity
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+  /airank/v1/projects/{projectId}:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getProject
+      responses:
+        "200":
+          description: Owned project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+    patch:
+      operationId: updateProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectUpdate" }
+      responses:
+        "200":
+          description: New identity version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+  /airank/v1/projects/{projectId}/archive:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: archiveProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectRevision" }
+      responses:
+        "200":
+          description: Archived without deleting evidence
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+  /airank/v1/projects/{projectId}/versions:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listProjectVersions
+      responses:
+        "200":
+          description: Immutable owned identity history
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProjectIdentity" }
+  /airank/v1/me/preferences:
+    get:
+      operationId: getPreferences
+      responses:
+        "200":
+          description: Account preferences
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Preferences" }
+    patch:
+      operationId: updatePreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PreferenceUpdate" }
+      responses:
+        "200":
+          description: Saved preferences
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Preferences" }
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  schemas:
+    Brand:
+      type: object
+      required: [id, name, aliases, domains, status, version]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        aliases: { type: array, items: { type: string } }
+        domains: { type: array, items: { type: string } }
+        status: { type: string, enum: [active, archived] }
+        version: { type: integer }
+    Candidate:
+      type: object
+      required: [id, name, evidenceIds, status, brandId]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        evidenceIds: { type: array, items: { type: string } }
+        status: { type: string, enum: [pending, accepted, dismissed, merged] }
+        brandId: { type: [string, "null"] }
+        proposedDomains: { type: array, items: { type: string }, description: Unverified domain proposals; explicit user review required before adding to a cohort }
+        source: { type: string, enum: [observed_answer, project_context_ai] }
+        reviewRequired: { type: boolean }
+        identityVersion: { type: integer }
+        market: { type: string }
+        language: { type: string }
+    Source:
+      type: object
+      required: [url, domain, answers, owned, evidenceIds]
+      properties:
+        url: { type: string }
+        domain: { type: string }
+        answers: { type: integer }
+        owned: { type: boolean }
+        evidenceIds: { type: array, items: { type: string } }
+    Research:
+      type: object
+      required: [version, competitors, candidates, sources, evidence]
+      properties:
+        version: { type: integer }
+        competitors: { type: array, items: { $ref: "#/components/schemas/Brand" } }
+        candidates: { type: array, items: { $ref: "#/components/schemas/Candidate" } }
+        sources: { type: array, items: { $ref: "#/components/schemas/Source" } }
+        evidence: { type: array, items: { $ref: "#/components/schemas/AnalyticsEvidence" } }
+    ResearchInput:
+      type: object
+      additionalProperties: false
+      required: [action]
+      properties:
+        action: { type: string, enum: [create, update, archive, accept, dismiss, merge, suggest] }
+        id: { type: string }
+        targetId: { type: string }
+        expectedVersion: { type: integer, description: Required for cohort mutations; omitted for suggest }
+        name: { type: string }
+        aliases: { type: array, items: { type: string } }
+        domains: { type: array, items: { type: string } }
+    EvidenceDetail:
+      type: object
+      required: [evidence, raw, rawAvailable]
+      properties:
+        evidence: { $ref: "#/components/schemas/AnalyticsEvidence" }
+        raw: { type: object, additionalProperties: true }
+        rawAvailable: { type: boolean }
+    SentimentQuote:
+      type: object
+      required: [text, start, end, polarity]
+      properties:
+        text: { type: string }
+        start: { type: integer }
+        end: { type: integer }
+        polarity: { type: string }
+        score: { type: [number, "null"] }
+        attribute: { type: [string, "null"] }
+    BrandSentiment:
+      type: object
+      required: [status]
+      properties:
+        brandId: { type: [string, "null"] }
+        brandName: { type: [string, "null"] }
+        status: { type: string }
+        label: { type: [string, "null"] }
+        score: { type: [number, "null"] }
+        quotes: { type: array, items: { $ref: "#/components/schemas/SentimentQuote" } }
+        analysisVersion: { type: [string, "null"] }
+        rubricVersion: { type: [string, "null"] }
+        model: { type: [string, "null"] }
+        requestedModel: { type: [string, "null"] }
+        assessedAt: { type: [number, "null"] }
+    SentimentAnalysis:
+      type: object
+      required: [state]
+      properties:
+        state: { type: string }
+        analysisVersion: { type: [string, "null"] }
+        configuredAnalysisVersion: { type: [string, "null"] }
+        requestedModel: { type: [string, "null"] }
+        error: { type: [string, "null"] }
+    ResultCitation:
+      oneOf:
+        - { type: string }
+        - type: object
+          required: [url]
+          properties:
+            url: { type: string }
+            title: { type: string }
+    CollectionSource:
+      type: object
+      required: [url, kind, provenance]
+      properties:
+        url: { type: string }
+        title: { type: string }
+        kind: { type: string, enum: [citation, source_reference, retrieval] }
+        provenance: { type: string }
+        index: { type: integer }
+        occurrences: { type: integer }
+        passage: { type: string }
+        snippet: { type: string }
+    CollectionEvidence:
+      type: object
+      required: [version, supplier, surface, requestedMarket, requestedLanguage, locationVerification, modelVersionVerified, sourceReferences, citationObservation]
+      properties:
+        version: { type: string }
+        retrievalObservation: { type: string, enum: [observed, not_observed, unavailable] }
+        supplier: { type: string }
+        surface: { type: string }
+        requestedMarket: { type: string }
+        requestedLanguage: { type: string }
+        locationVerification: { type: string }
+        reportedLocationCode: { type: [integer, "null"] }
+        reportedLanguage: { type: [string, "null"] }
+        modelVersionVerified: { type: boolean }
+        sourceReferences: { type: array, items: { $ref: "#/components/schemas/CollectionSource" } }
+        citationObservation: { type: string }
+        searchQueries: { type: [array, "null"], items: {} }
+        searchQueryRecords:
+          type: [array, "null"]
+          items: { $ref: "#/components/schemas/CapturedSearchQuery" }
+    EvidenceDiagnostics:
+      type: object
+      properties:
+        measurement_surface: { type: string }
+        failure_code: { type: string }
+    ResultItem:
+      type: object
+      required: [id, runId, promptId, text, provider, status, answer, citations]
+      properties:
+        brandOrder: { $ref: "#/components/schemas/BrandOrderEvidence" }
+        id: { type: string }
+        runId: { type: string }
+        promptId: { type: string }
+        promptVersion: { type: [integer, "null"] }
+        text: { type: string }
+        provider: { type: string }
+        model: { type: [string, "null"] }
+        status: { type: string }
+        answer: { type: [string, "null"] }
+        citations: { type: array, items: { $ref: "#/components/schemas/ResultCitation" } }
+        observedAt: { type: [number, "null"] }
+        state: { type: string }
+        taskStatus: { type: [string, "null"] }
+        runCreatedAt: { type: [number, "null"] }
+        topic: { type: [string, "null"] }
+        language: { type: [string, "null"] }
+        market: { type: [string, "null"] }
+        metricsEligible: { type: boolean }
+        collection: { $ref: "#/components/schemas/CollectionEvidence" }
+        meta: { $ref: "#/components/schemas/EvidenceDiagnostics" }
+        measurementSurface: { type: string }
+        collectionMethod: { type: string }
+        metricVersion: { type: string }
+        observation: { $ref: "#/components/schemas/ApiObservation" }
+        mentioned: { type: [boolean, "null"] }
+        ownedCitation: { type: [boolean, "null"] }
+        recommendation: { type: [string, "null"] }
+        position: { type: [number, "null"] }
+        exclusion: { type: [string, "null"] }
+        sentimentAnalysis: { $ref: "#/components/schemas/SentimentAnalysis" }
+        sentiment: { $ref: "#/components/schemas/BrandSentiment" }
+        brandSentiments: { type: object, additionalProperties: { $ref: "#/components/schemas/BrandSentiment" } }
+    ResultPage:
+      type: object
+      required: [items, total, page, pageSize, hasMore]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ResultItem" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        hasMore: { type: boolean }
+    SentimentBackfillInput:
+      type: object
+      additionalProperties: false
+      required: [runId]
+      properties:
+        runId: { type: string }
+    SentimentBackfillResult:
+      type: object
+      additionalProperties: true
+      properties:
+        queued: { type: integer }
+    SentimentGroup:
+      type: object
+      required: [sampleSize]
+      properties:
+        id: { type: string }
+        analysisVersion: { type: [string, "null"] }
+        model: { type: [string, "null"] }
+        sampleSize: { type: integer }
+        score: { type: [number, "null"] }
+    SentimentAttribute:
+      type: object
+      required: [answers, positiveAnswers, negativeAnswers, neutralAnswers, exampleEvidenceIds]
+      properties:
+        label: { type: string }
+        answers: { type: integer }
+        positiveAnswers: { type: integer }
+        negativeAnswers: { type: integer }
+        neutralAnswers: { type: integer }
+        exampleEvidenceIds: { type: array, items: { type: string } }
+    SentimentMetrics:
+      type: object
+      required: [state]
+      properties:
+        score: { type: [number, "null"] }
+        sampleSize: { type: integer }
+        mentionedAnswers: { type: integer }
+        coverage: { type: [number, "null"] }
+        labelCounts: { type: object, additionalProperties: { type: integer } }
+        states: { type: object, additionalProperties: { type: integer } }
+        groups: { type: array, items: { $ref: "#/components/schemas/SentimentGroup" } }
+        state: { type: string, description: "unavailable | partial | complete | incomparable" }
+        attributes: { type: array, items: { $ref: "#/components/schemas/SentimentAttribute" } }
+    BrandMentionSpan:
+      type: object
+      required: [brandName, quote, start, end, position]
+      properties:
+        brandName: { type: string }
+        quote: { type: string, description: Exact substring of the original answer }
+        start: { type: integer, description: UTF-16 start offset }
+        end: { type: integer, description: Exclusive UTF-16 end offset }
+        position: { type: [integer, "null"] }
+    BrandOrderEvidence:
+      type: object
+      required: [version, scope, state, reason, targetPosition, mentions]
+      properties:
+        version: { type: string }
+        scope: { type: string, enum: [tracked_cohort] }
+        state: { type: string, enum: [observed, ambiguous, unavailable] }
+        reason: { type: [string, "null"] }
+        targetPosition: { type: [integer, "null"] }
+        mentions: { type: array, items: { $ref: "#/components/schemas/BrandMentionSpan" } }
+    BrandOrderMetrics:
+      type: object
+      required: [version, scope, eligibleAnswers, mentionedAnswers, firsts, ambiguousAnswers, unavailableAnswers, meanPosition, winRate]
+      properties:
+        version: { type: string }
+        scope: { type: string, enum: [tracked_cohort] }
+        eligibleAnswers: { type: integer }
+        mentionedAnswers: { type: integer }
+        firsts: { type: integer }
+        ambiguousAnswers: { type: integer }
+        unavailableAnswers: { type: integer }
+        meanPosition: { type: [number, "null"] }
+        winRate: { type: [number, "null"] }
+    EvidenceMetric:
+      type: object
+      required: [eligible, expected, mentions, ownedCitations, classified, recommended, positions, visibility, score, citationRate, recommendationRate, cohortShare, cohortMentions, meanPosition, state]
+      properties:
+        metricVersion: { type: string }
+        measurementSurface: { type: [string, "null"] }
+        collectionMethod: { type: [string, "null"] }
+        citationAnswers: { type: integer }
+        eligible: { type: integer }
+        expected: { type: integer }
+        mentions: { type: integer }
+        ownedCitations: { type: integer }
+        classified: { type: integer }
+        recommended: { type: integer }
+        positions: { type: integer }
+        visibility: { type: [number, "null"] }
+        score: { type: [number, "null"] }
+        citationRate: { type: [number, "null"] }
+        recommendationRate: { type: [number, "null"] }
+        cohortShare: { type: [number, "null"] }
+        cohortMentions: { type: integer }
+        meanPosition: { type: [number, "null"] }
+        state: { type: string }
+        sentiment: { $ref: "#/components/schemas/SentimentMetrics" }
+        brandOrder: { $ref: "#/components/schemas/BrandOrderMetrics" }
+    IndustryCitation:
+      type: object
+      required: [url]
+      properties:
+        url: { type: string }
+        title: { type: string }
+    IndustryEvidence:
+      type: object
+      required: [id, prompt, provider, model, status, observedAt, answer, citations]
+      properties:
+        id: { type: string }
+        prompt: { type: string }
+        provider: { type: string }
+        model: { type: [string, "null"] }
+        status: { type: string }
+        observedAt: { type: [number, "null"] }
+        answer: { type: string }
+        citations: { type: array, items: { $ref: "#/components/schemas/IndustryCitation" } }
+    IndustryRanking:
+      type: object
+      required: [id, name, mentions, citations, eligible, visibility]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        mentions: { type: integer }
+        citations: { type: integer }
+        eligible: { type: integer }
+        visibility: { type: [number, "null"] }
+    IndustryLatest:
+      type: object
+      required: [runId, eligible, expected, rankings, evidence]
+      properties:
+        runId: { type: string }
+        eligible: { type: integer }
+        expected: { type: integer }
+        rankings: { type: array, items: { $ref: "#/components/schemas/IndustryRanking" } }
+        evidence: { type: array, items: { $ref: "#/components/schemas/IndustryEvidence" } }
+    IndustryRun:
+      type: object
+      required: [id, createdAt, status, composition]
+      properties:
+        id: { type: string }
+        createdAt: { type: number }
+        status: { type: string }
+        composition: { type: string }
+    IndustryPanel:
+      type: object
+      required: [id, version, published, brands, prompts, requiredCalls, capacity, enabled, nextAt, timezone, weekdays, hour, runs, latest]
+      properties:
+        id: { type: string }
+        version: { type: string }
+        published: { type: boolean }
+        brands: { type: integer }
+        prompts: { type: integer }
+        requiredCalls: { type: integer }
+        capacity: { type: number }
+        enabled: { type: boolean }
+        nextAt: { type: [number, "null"] }
+        timezone: { type: string }
+        weekdays: { type: array, items: { type: integer } }
+        hour: { type: integer }
+        runs: { type: array, items: { $ref: "#/components/schemas/IndustryRun" } }
+        latest:
+          oneOf:
+            - { $ref: "#/components/schemas/IndustryLatest" }
+            - { type: "null" }
+    Industry:
+      type: object
+      required: [id, nameFi, nameEn, status, pilot, panels]
+      properties:
+        id: { type: string }
+        nameFi: { type: string }
+        nameEn: { type: string }
+        status: { type: string, enum: [draft, unmeasured, measured] }
+        pilot: { type: boolean }
+        panels: { type: array, items: { $ref: "#/components/schemas/IndustryPanel" } }
+    IndustryDirectory:
+      type: object
+      required: [admin, activationAvailable, industries]
+      properties:
+        admin: { type: boolean }
+        activationAvailable: { type: boolean }
+        industries: { type: array, items: { $ref: "#/components/schemas/Industry" } }
+    IndustryActionInput:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [import, publish, schedule, run] }
+        panel: { type: object, additionalProperties: true }
+        panelId: { type: string }
+        verified: { type: boolean }
+        neutralConfirmed: { type: boolean }
+        enabled: { type: boolean }
+        submissionId: { type: string }
+    ScheduleSlot:
+      type: object
+      required: [slot, dueAt, state, runId, reason]
+      properties:
+        slot: { type: string }
+        dueAt: { type: number }
+        state: { type: string }
+        runId: { type: [string, "null"] }
+        reason: { type: [string, "null"] }
+    ProjectSchedule:
+      type: object
+      required: [version, enabled, timezone, hour, weekdays, nextAt, activationAvailable, missedPolicy, slots, minute, status, activePromptCount, promptLimit, lastRunAt, lastRunStatus]
+      properties:
+        immediate:
+          type: object
+          required: [state, reason, runId]
+          properties:
+            state: { type: string }
+            reason: { type: [string, "null"] }
+            runId: { type: [string, "null"] }
+        minute: { type: integer }
+        status: { type: string }
+        activePromptCount: { type: integer }
+        promptLimit: { type: [integer, "null"] }
+        lastRunAt: { type: [number, "null"] }
+        lastRunStatus: { type: [string, "null"] }
+        version: { type: integer }
+        enabled: { type: boolean }
+        timezone: { type: string }
+        hour: { type: integer }
+        weekdays: { type: array, items: { type: integer } }
+        nextAt: { type: [number, "null"] }
+        activationAvailable: { type: boolean }
+        missedPolicy: { type: string }
+        slots: { type: array, items: { $ref: "#/components/schemas/ScheduleSlot" } }
+    ProjectScheduleInput:
+      type: object
+      required: [expectedVersion, enabled, timezone, hour, weekdays]
+      properties:
+        expectedVersion: { type: integer }
+        enabled: { type: boolean }
+        timezone: { type: string }
+        hour: { type: integer, minimum: 0, maximum: 23 }
+        weekdays: { type: array, items: { type: integer, minimum: 0, maximum: 6 }, minItems: 1, maxItems: 7 }
+    OpportunityStatus:
+      type: string
+      enum: [new, in_progress, completed]
+    OpportunityHistoryEvent:
+      type: object
+      required: [at, status, notes]
+      properties:
+        at: { type: number }
+        status: { $ref: "#/components/schemas/OpportunityStatus" }
+        notes: { type: string }
+    Opportunity:
+      type: object
+      required: [id, version, ruleVersion, kind, titleFi, titleEn, rationaleFi, rationaleEn, actionFi, actionEn, priority, status, notes, createdAt, updatedAt, evidenceIds, runIds, eligible, expected, history]
+      properties:
+        id: { type: string }
+        version: { type: integer }
+        ruleVersion: { type: string }
+        kind: { type: string, enum: [visibility_gap, citation_review] }
+        titleFi: { type: string }
+        titleEn: { type: string }
+        rationaleFi: { type: string }
+        rationaleEn: { type: string }
+        actionFi: { type: string }
+        actionEn: { type: string }
+        priority: { type: string, enum: [medium, high] }
+        status: { $ref: "#/components/schemas/OpportunityStatus" }
+        notes: { type: string }
+        createdAt: { type: number }
+        updatedAt: { type: number }
+        evidenceIds: { type: array, items: { type: string } }
+        runIds: { type: array, items: { type: string } }
+        eligible: { type: integer }
+        expected: { type: integer }
+        history: { type: array, items: { $ref: "#/components/schemas/OpportunityHistoryEvent" } }
+    OpportunityRefreshInput:
+      type: object
+      required: [refresh]
+      properties:
+        refresh: { type: boolean, enum: [true] }
+    OpportunityUpdateInput:
+      type: object
+      required: [expectedVersion, status, notes]
+      properties:
+        expectedVersion: { type: integer }
+        status: { $ref: "#/components/schemas/OpportunityStatus" }
+        notes: { type: string, maxLength: 4000 }
+    ReportFilters:
+      type: object
+      properties:
+        from: { type: string }
+        to: { type: string }
+        provider: { type: string }
+        topic: { type: string }
+        group: { type: string }
+        runId: { type: string }
+        tag: { type: string, maxLength: 40 }
+        tags: { type: string, maxLength: 1024, description: "JSON-encoded array of at most 12 tag strings, each at most 40 characters." }
+        tagMode: { type: string, enum: [and, or] }
+        market: { type: string }
+        language: { type: string }
+        surface: { type: string }
+        promptId: { type: string }
+        promptVersion: { type: integer, minimum: 1 }
+    ReportInput:
+      type: object
+      required: [locale, filters]
+      properties:
+        locale: { type: string, enum: [fi, en] }
+        filters: { $ref: "#/components/schemas/ReportFilters" }
+        title: { type: string, maxLength: 160 }
+        sections: { type: array, uniqueItems: true, items: { $ref: "#/components/schemas/ReportSection" } }
+    ReportSection: { type: string, enum: [overview, cohort, questions] }
+    ReportRunSnapshot:
+      type: object
+      required: [runId, snapshot]
+      properties:
+        runId: { type: string }
+        snapshot: { type: object, additionalProperties: true }
+    ReportSummary:
+      type: object
+      required: [id, projectId, createdAt, expiresAt, locale, title]
+      properties:
+        title: { type: string }
+        id: { type: string }
+        projectId: { type: string }
+        createdAt: { type: number }
+        expiresAt: { type: number }
+        locale: { type: string }
+    ReportSnapshot:
+      type: object
+      required: [schemaVersion, locale, filters, measurementLanguage, market, timezone, identity, analytics, title, sections, runSnapshots]
+      properties:
+        title: { type: string }
+        sections: { type: array, items: { type: string } }
+        runSnapshots: { type: array, items: { $ref: "#/components/schemas/ReportRunSnapshot" } }
+        schemaVersion: { type: string }
+        locale: { type: string }
+        filters: { $ref: "#/components/schemas/ReportFilters" }
+        measurementLanguage: { type: string }
+        market: { type: string }
+        timezone: { type: string }
+        identity: { type: object, additionalProperties: true }
+        analytics: { $ref: "#/components/schemas/ProjectAnalytics" }
+    ReportDetail:
+      allOf:
+        - { $ref: "#/components/schemas/ReportSummary" }
+        - type: object
+          required: [snapshot]
+          properties:
+            snapshot: { $ref: "#/components/schemas/ReportSnapshot" }
+    MeasurementRoute:
+      type: object
+      required: [provider, model, transport, configured]
+      properties:
+        provider: { type: string }
+        model: { type: string }
+        transport: { type: string }
+        configured: { type: boolean }
+        measurementSurface: { type: string }
+        collectionEnabled: { type: boolean }
+        budgetConfigured: { type: boolean }
+    MeasurementSettings:
+      type: object
+      required: [version, providers, available, prompts, requiredCalls, capacity, updatedAt]
+      properties:
+        version: { type: integer }
+        providers: { type: array, items: { type: string } }
+        available: { type: array, items: { $ref: "#/components/schemas/MeasurementRoute" } }
+        prompts: { type: integer }
+        requiredCalls: { type: integer }
+        capacity: { type: integer }
+        updatedAt: { type: [number, "null"] }
+    MeasurementSettingsInput:
+      type: object
+      required: [expectedVersion, providers]
+      properties:
+        expectedVersion: { type: integer }
+        providers: { type: array, items: { type: string }, minItems: 1, uniqueItems: true }
+    ApiObservation:
+      type: object
+      required: [version, complete, citationObservation, citationOccurrences, retrievalObservation, fanoutObservation]
+      properties:
+        version: { type: string }
+        complete: { type: boolean }
+        citationObservation: { type: string }
+        retrievalObservation: { type: string }
+        fanoutObservation: { type: string }
+        citationOccurrences:
+          type: array
+          items:
+            type: object
+            required: [url, provenance]
+            properties:
+              url: { type: string }
+              provenance: { type: string }
+              title: { type: string }
+              blockIndex: { type: integer, minimum: 0 }
+              start: { type: integer, minimum: 0 }
+              end: { type: integer, minimum: 0 }
+    AnalyticsEvidence:
+      type: object
+      required: [id, runId, promptId, promptVersion, text, answer, provider, model, status, observedAt, mentioned, ownedCitation, recommendation, recommendationSpans, position, exclusion, citations]
+      properties:
+        brandOrder: { $ref: "#/components/schemas/BrandOrderEvidence" }
+        topic: { type: string }
+        tags: { type: array, items: { type: string } }
+        market: { type: string }
+        language: { type: string }
+        brandNames: { type: array, items: { type: string } }
+        id: { type: string }
+        runId: { type: string }
+        promptId: { type: string }
+        promptVersion: { type: integer }
+        text: { type: string }
+        answer: { type: string }
+        provider: { type: string }
+        model: { type: [string, "null"] }
+        collection: { $ref: "#/components/schemas/CollectionEvidence" }
+        measurementSurface: { type: string }
+        collectionMethod: { type: string }
+        metricVersion: { type: string }
+        observation: { $ref: "#/components/schemas/ApiObservation" }
+        status: { type: string }
+        observedAt: { type: number }
+        mentioned: { type: boolean }
+        ownedCitation: { type: boolean }
+        recommendation: { type: string }
+        recommendationSpans: { type: array, items: { type: string } }
+        position: { type: [number, "null"] }
+        exclusion: { type: [string, "null"] }
+        citations: { type: array, items: { type: string } }
+        route: { type: string }
+    AnalyticsRun:
+      type: object
+      required: [id, createdAt, kind, status, group, comparableToPrevious, metrics]
+      properties:
+        id: { type: string }
+        createdAt: { type: number }
+        kind: { type: string }
+        status: { type: string }
+        group: { type: string }
+        measurementSurface: { type: string }
+        collectionMethod: { type: string }
+        metricVersion: { type: string }
+        comparableToPrevious: { type: boolean }
+        metrics: { $ref: "#/components/schemas/EvidenceMetric" }
+    AnalyticsProvider:
+      type: object
+      required: [provider, metrics]
+      properties:
+        provider: { type: string }
+        metrics: { $ref: "#/components/schemas/EvidenceMetric" }
+    AnalyticsGroup:
+      type: object
+      required: [id, runCount, latestAt, label]
+      properties:
+        id: { type: string }
+        runCount: { type: integer }
+        latestAt: { type: number }
+        label: { type: string }
+        measurementSurface: { type: string }
+        collectionMethod: { type: string }
+        metricVersion: { type: string }
+    AnalyticsChange:
+      type: object
+      required: [id, createdAt, type, version]
+      properties:
+        id: { type: string }
+        createdAt: { type: string }
+        type: { type: string }
+        version: { type: integer }
+    CompetitorMeasurement:
+      type: object
+      required: [brandName, ownedDomains, isOwned, metrics, change, runs, runCount, eligibleRunCount]
+      properties:
+        brandName: { type: string }
+        ownedDomains: { type: array, items: { type: string } }
+        isOwned: { type: boolean }
+        runCount: { type: integer, description: "Selected runs, including those without eligible answers." }
+        eligibleRunCount: { type: integer, description: "Selected runs with at least one eligible answer." }
+        metrics: { $ref: "#/components/schemas/EvidenceMetric" }
+        change: { type: [number, "null"], description: "Percentage-point visibility change between the latest two eligible comparable runs in the selected period." }
+        runs: { type: array, items: { $ref: "#/components/schemas/AnalyticsRun" } }
+    PromptAnalyticsSummary:
+      type: object
+      required: [promptId, version, selectedGroup, groupCount, latestAt, runCount, metrics]
+      properties:
+        promptId: { type: string }
+        version: { type: integer }
+        selectedGroup: { type: string }
+        groupCount: { type: integer }
+        latestAt: { type: number }
+        runCount: { type: integer }
+        metrics: { $ref: "#/components/schemas/EvidenceMetric" }
+    PromptAnalyticsScope:
+      type: object
+      required: [promptId, promptVersion]
+      properties:
+        promptId: { type: [string, "null"] }
+        promptVersion: { type: [integer, "null"] }
+    OverviewMatrixCell:
+      type: object
+      required: [topic, tag, metrics]
+      properties:
+        topic: { type: string }
+        tag: { type: string }
+        metrics: { $ref: "#/components/schemas/EvidenceMetric" }
+    OverviewDomain:
+      type: object
+      required: [domain, category, answers]
+      properties:
+        domain: { type: string }
+        category: { type: string, enum: [owned, competitor, other] }
+        answers: { type: integer }
+    OverviewDomainType:
+      type: object
+      required: [category, answers]
+      properties:
+        category: { type: string }
+        answers: { type: integer }
+    OverviewComparison:
+      type: [object, "null"]
+      required: [from, to, metrics]
+      properties:
+        from: { type: string }
+        to: { type: string }
+        metrics: { $ref: "#/components/schemas/EvidenceMetric" }
+    CapturedSearchQuery:
+      type: object
+      required: [query, provenance]
+      properties:
+        query: { type: string }
+        provenance: { type: string }
+    IntelligenceInput:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [analyse, source_review, brand_review] }
+        evidenceIds: { type: array, maxItems: 50, items: { type: string } }
+        domain: { type: string }
+        sourceType: { type: [string, "null"], enum: [corporate, ugc, editorial, institutional, unknown, null] }
+        key: { type: string }
+        review: { type: [string, "null"], enum: [confirmed, rejected, null] }
+    IntelligenceMutation:
+      type: object
+      required: [queued, updated, version]
+      properties:
+        queued: { type: integer }
+        updated: { type: boolean }
+        version: { type: string }
+    DiscoveryMention:
+      type: object
+      required: [evidenceId, text, start, end, position]
+      properties:
+        evidenceId: { type: string }
+        text: { type: string }
+        start: { type: integer }
+        end: { type: integer }
+        position: { type: [integer, "null"] }
+    DiscoveredBrand:
+      type: object
+      required: [key, name, review, ambiguous, answers, evidenceIds, mentions, averagePosition, firstAnswers, visibility, winRate]
+      properties:
+        key: { type: string }
+        name: { type: string }
+        review: { type: string, enum: [unreviewed, confirmed, rejected] }
+        ambiguous: { type: boolean }
+        answers: { type: integer }
+        evidenceIds: { type: array, items: { type: string } }
+        mentions: { type: array, items: { $ref: "#/components/schemas/DiscoveryMention" } }
+        averagePosition: { type: [number, "null"] }
+        firstAnswers: { type: integer }
+        visibility: { type: [number, "null"] }
+        winRate: { type: [number, "null"] }
+    IntelligenceJob:
+      type: object
+      required: [evidenceId, state, error]
+      properties:
+        evidenceId: { type: string }
+        state: { type: string }
+        error: { type: [string, "null"] }
+    FanoutQuery:
+      type: object
+      required: [query, answers, evidenceIds, variants, provenances, providers]
+      properties:
+        query: { type: string }
+        answers: { type: integer }
+        evidenceIds: { type: array, items: { type: string } }
+        variants: { type: array, items: { type: string } }
+        provenances: { type: array, items: { type: string } }
+        providers: { type: array, items: { type: string } }
+    FanoutAnalytics:
+      type: object
+      required: [eligibleAnswers, observableAnswers, withQueries, queries]
+      properties:
+        eligibleAnswers: { type: integer }
+        observableAnswers: { type: integer }
+        withQueries: { type: integer }
+        queries: { type: array, items: { $ref: "#/components/schemas/FanoutQuery" } }
+    EvidenceIntelligence:
+      type: object
+      required: [version, available, enabled, eligibleAnswers, analysedAnswers, rankings, jobs, fanout, rankingScope, model]
+      properties:
+        version: { type: string }
+        available: { type: boolean }
+        enabled: { type: boolean }
+        model: { type: string }
+        eligibleAnswers: { type: integer }
+        analysedAnswers: { type: integer }
+        rankingScope: { type: string }
+        rankings: { type: array, items: { $ref: "#/components/schemas/DiscoveredBrand" } }
+        jobs: { type: array, items: { $ref: "#/components/schemas/IntelligenceJob" } }
+        fanout: { $ref: "#/components/schemas/FanoutAnalytics" }
+    SourceEvidenceItem:
+      type: object
+      required: [url, domain, kind, category, answers, evidenceIds, reportedOccurrences, occurrenceAnswers, providers, surfaces, provenances]
+      properties:
+        sourceType: { type: string, enum: [corporate, ugc, editorial, institutional, unknown] }
+        sourceTypeProvenance: { type: string }
+        sourceTypeReviewedAt: { type: [integer, "null"] }
+        url: { type: string }
+        domain: { type: string }
+        kind: { type: string, enum: [citation, source_reference, retrieval, answer_link] }
+        category: { type: string, enum: [owned, competitor, other, mixed] }
+        answers: { type: integer }
+        evidenceIds: { type: array, items: { type: string } }
+        reportedOccurrences: { type: [integer, "null"] }
+        occurrenceAnswers: { type: integer }
+        providers: { type: array, items: { type: string } }
+        surfaces: { type: array, items: { type: string } }
+        provenances: { type: array, items: { type: string } }
+    SourceEvidenceCoverage:
+      type: object
+      required: [kind, answers, urls, observableAnswers]
+      properties:
+        kind: { type: string, enum: [citation, source_reference, retrieval, answer_link] }
+        answers: { type: integer }
+        urls: { type: integer }
+        observableAnswers: { type: [integer, "null"] }
+    SourceAnalytics:
+      type: object
+      required: [version, eligibleAnswers, coverage, items]
+      properties:
+        version: { type: string }
+        eligibleAnswers: { type: integer }
+        coverage: { type: array, items: { $ref: "#/components/schemas/SourceEvidenceCoverage" } }
+        items: { type: array, items: { $ref: "#/components/schemas/SourceEvidenceItem" } }
+    AnalyticsPromptOption:
+      type: object
+      required: [id, text]
+      properties:
+        id: { type: string }
+        text: { type: string }
+    OverviewInsights:
+      type: object
+      required: [matrix, domains, domainTypes, comparison]
+      properties:
+        matrix: { type: array, items: { $ref: "#/components/schemas/OverviewMatrixCell" } }
+        domains: { type: array, items: { $ref: "#/components/schemas/OverviewDomain" } }
+        domainTypes: { type: array, items: { $ref: "#/components/schemas/OverviewDomainType" } }
+        comparison: { $ref: "#/components/schemas/OverviewComparison" }
+        sources: { $ref: "#/components/schemas/SourceAnalytics" }
+    ProjectAnalytics:
+      type: object
+      required: [methodology, extractionVersion, selectedGroup, groups, metrics, providers, runs, evidence, changes, topics, availableProviders, totalRuns, quickChecks, market, language]
+      properties:
+        availableTags: { type: array, items: { type: string } }
+        availableMarkets: { type: array, items: { type: string } }
+        availableLanguages: { type: array, items: { type: string } }
+        availableSurfaces: { type: array, items: { type: string } }
+        availablePrompts: { type: array, items: { $ref: "#/components/schemas/AnalyticsPromptOption" } }
+        overview: { $ref: "#/components/schemas/OverviewInsights" }
+        intelligence: { $ref: "#/components/schemas/EvidenceIntelligence" }
+        methodology: { type: string }
+        promptScope: { $ref: "#/components/schemas/PromptAnalyticsScope" }
+        promptSummaries:
+          type: array
+          description: Full-dataset per-prompt-version summaries for each latest compatible group, independent of list pagination. Omitted by older backends.
+          items: { $ref: "#/components/schemas/PromptAnalyticsSummary" }
+        extractionVersion: { type: string }
+        selectedGroup: { type: [string, "null"] }
+        groups: { type: array, items: { $ref: "#/components/schemas/AnalyticsGroup" } }
+        metrics: { $ref: "#/components/schemas/EvidenceMetric" }
+        competitors:
+          type: array
+          description: "Frozen measured cohort, including the owned brand. Omitted by older API versions; empty when no cohort was recorded."
+          items: { $ref: "#/components/schemas/CompetitorMeasurement" }
+        providers: { type: array, items: { $ref: "#/components/schemas/AnalyticsProvider" } }
+        runs: { type: array, items: { $ref: "#/components/schemas/AnalyticsRun" } }
+        evidence: { type: array, items: { $ref: "#/components/schemas/AnalyticsEvidence" } }
+        changes: { type: array, items: { $ref: "#/components/schemas/AnalyticsChange" } }
+        topics: { type: array, items: { type: string } }
+        availableProviders: { type: array, items: { type: string } }
+        totalRuns: { type: integer }
+        quickChecks: { type: integer }
+        market: { type: string }
+        language: { type: string }
+    EmptyCommand:
+      type: object
+      additionalProperties: false
+    TrackedPromptInput:
+      type: object
+      required: [text, topic, tags, kind]
+      properties:
+        text: { type: string, minLength: 8, maxLength: 1000 }
+        topic: { type: string, maxLength: 80 }
+        tags: { type: array, maxItems: 12, items: { type: string } }
+        kind: { type: string, enum: [neutral, diagnostic] }
+    TrackedPromptUpdate:
+      allOf:
+        - { $ref: "#/components/schemas/TrackedPromptInput" }
+        - type: object
+          required: [expectedVersion, status]
+          properties:
+            expectedVersion: { type: integer }
+            status: { type: string, enum: [active, archived] }
+    TrackedPrompt:
+      allOf:
+        - { $ref: "#/components/schemas/TrackedPromptInput" }
+        - type: object
+          required: [id, projectId, version, status, createdAt]
+          properties:
+            id: { type: string }
+            projectId: { type: string }
+            version: { type: integer }
+            status: { type: string, enum: [active, archived] }
+            createdAt: { type: integer }
+            market: { type: string, description: "Market snapshot assigned at save" }
+            language: { type: string, description: "Language snapshot assigned at save" }
+    TrackedPromptPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/TrackedPrompt" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    TrackedPromptDetail:
+      type: object
+      required: [prompt, versions, measurements]
+      properties:
+        prompt: { $ref: "#/components/schemas/TrackedPrompt" }
+        versions: { type: array, items: { $ref: "#/components/schemas/TrackedPrompt" } }
+        measurements: { type: array, items: { $ref: "#/components/schemas/MonitoringEvidence" } }
+    PromptSuggestion:
+      type: object
+      required: [id, text, status, source, promptId, kind, topic, tags]
+      properties:
+        id: { type: string }
+        text: { type: string }
+        status: { type: string, enum: [pending, accepted, rejected] }
+        source: { type: string }
+        promptId: { type: [string, "null"] }
+        kind: { type: string, enum: [neutral, diagnostic] }
+        topic: { type: string }
+        tags: { type: array, items: { type: string } }
+        identityVersion: { type: integer }
+        market: { type: string }
+        language: { type: string }
+    SuggestionEdit:
+      type: object
+      additionalProperties: false
+      properties:
+        text: { type: string, minLength: 8, maxLength: 1000 }
+        kind: { type: string, enum: [neutral, diagnostic] }
+        topic: { type: string, maxLength: 80 }
+        tags: { type: array, maxItems: 12, items: { type: string, minLength: 1, maxLength: 40 } }
+    SuggestionDecision:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [accept, reject] }
+        text: { type: string, minLength: 8, maxLength: 1000 }
+        kind: { type: string, enum: [neutral, diagnostic] }
+        topic: { type: string, maxLength: 80 }
+        tags: { type: array, maxItems: 12, items: { type: string, minLength: 1, maxLength: 40 } }
+    MonitoringRunInput:
+      type: object
+      required: [submissionId, kind]
+      properties:
+        submissionId: { type: string }
+        kind: { type: string, enum: [neutral, diagnostic] }
+    MonitoringRoute:
+      type: object
+      required: [provider, model, transport]
+      properties:
+        provider: { type: string }
+        model: { type: string }
+        transport: { type: string }
+        search_engine: { type: string }
+    MonitoringRun:
+      type: object
+      required: [id, projectId, submissionId, status, kind, expected, completed, valid, createdAt, deadlineAt, methodology, routes, reason]
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        submissionId: { type: string }
+        status: { type: string }
+        kind: { type: string }
+        expected: { type: integer }
+        completed: { type: integer }
+        valid: { type: integer }
+        createdAt: { type: integer }
+        deadlineAt: { type: integer }
+        methodology: { type: string }
+        routes: { type: array, items: { $ref: "#/components/schemas/MonitoringRoute" } }
+        reason: { type: [string, "null"] }
+    MonitoringEvidence:
+      type: object
+      required: [id, runId, promptId, promptVersion, text, provider, model, status, answer, citations, observedAt]
+      properties:
+        id: { type: string }
+        runId: { type: string }
+        promptId: { type: string }
+        promptVersion: { type: integer }
+        text: { type: string }
+        provider: { type: string }
+        model: { type: [string, "null"] }
+        collection: { $ref: "#/components/schemas/CollectionEvidence" }
+        meta: { $ref: "#/components/schemas/EvidenceDiagnostics" }
+        status: { type: string }
+        answer: { type: string }
+        citations:
+          type: array
+          items:
+            type: object
+            required: [url]
+            properties:
+              url: { type: string }
+              title: { type: string }
+        observedAt: { type: integer }
+        state: { type: string }
+        sentimentAnalysis: { $ref: "#/components/schemas/SentimentAnalysis" }
+        sentiment: { $ref: "#/components/schemas/BrandSentiment" }
+        brandSentiments: { type: object, additionalProperties: { $ref: "#/components/schemas/BrandSentiment" } }
+    MonitoringRunDetail:
+      type: object
+      required: [run, evidence]
+      properties:
+        run: { $ref: "#/components/schemas/MonitoringRun" }
+        evidence: { type: array, items: { $ref: "#/components/schemas/MonitoringEvidence" } }
+    QuickCheckInput:
+      type: object
+      required: [project_id, project_version, domain, brand_name, aliases, category_fi, market, language]
+      properties:
+        project_id: { type: string }
+        project_version: { type: integer }
+        domain: { type: string }
+        brand_name: { type: string }
+        aliases: { type: array, items: { type: string } }
+        category_fi: { type: string }
+        market: { type: string, description: "ISO 3166-1 alpha-2 market from the selected project" }
+        language: { type: string, description: "ISO 639-1 prompt language from the selected project" }
+    QuickCheckSubmission:
+      allOf:
+        - { $ref: "#/components/schemas/QuickCheckInput" }
+        - type: object
+          required: [profile_confirmed, methodology, preview_hash, submission_id]
+          properties:
+            profile_confirmed: { type: boolean }
+            methodology: { type: string }
+            preview_hash: { type: string }
+            submission_id: { type: string }
+    QuickCheckPreview:
+      type: object
+      required: [profile, prompts, providers, methodology, paid_calls, preview_hash]
+      properties:
+        profile: { $ref: "#/components/schemas/QuickCheckInput" }
+        prompts: { type: array, items: { type: string } }
+        providers: { type: array, items: { type: string } }
+        methodology: { type: string }
+        paid_calls: { type: integer }
+        preview_hash: { type: string }
+    QuickCheckAccepted:
+      type: object
+      required: [id, status, domain, project_id, project_version, submission_id, created_at]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        domain: { type: string }
+        project_id: { type: string }
+        project_version: { type: integer }
+        submission_id: { type: string }
+        created_at: { type: integer }
+    QuickCheckScore:
+      type: object
+      required: [value, state, band, mentions, valid_answers, expected_answers, providers_requested, providers_measured, methodology]
+      properties:
+        value: { type: [number, "null"] }
+        state: { type: string, enum: [pending, legacy, unavailable, partial, complete] }
+        band: { type: [string, "null"] }
+        mentions: { type: integer }
+        valid_answers: { type: integer }
+        expected_answers: { type: integer }
+        providers_requested: { type: array, items: { type: string } }
+        providers_measured: { type: array, items: { type: string } }
+        methodology: { type: string }
+    QuickCheckObservation:
+      type: object
+      required: [prompt_id, provider, provider_status, answer_text, citations]
+      properties:
+        prompt_id: { type: string }
+        provider: { type: string }
+        provider_status: { type: string }
+        answer_text: { type: [string, "null"] }
+        model: { type: [string, "null"] }
+        observed_at: { type: [integer, "null"] }
+        citations:
+          type: array
+          items:
+            type: object
+            required: [url]
+            properties:
+              url: { type: string }
+              title: { type: string }
+    QuickCheckReport:
+      allOf:
+        - { $ref: "#/components/schemas/QuickCheckAccepted" }
+        - type: object
+          required: [score, prompts, observations]
+          properties:
+            score: { $ref: "#/components/schemas/QuickCheckScore" }
+            prompts:
+              type: array
+              items:
+                type: object
+                required: [id, sequence, prompt_text, prompt_version]
+                properties:
+                  id: { type: string }
+                  sequence: { type: integer }
+                  prompt_text: { type: string }
+                  prompt_version: { type: string }
+            observations:
+              type: array
+              items: { $ref: "#/components/schemas/QuickCheckObservation" }
+    AppOk:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+    AppUser:
+      type: object
+      required: [id, email, name]
+      properties:
+        id: { type: string }
+        email: { type: string }
+        name: { type: string }
+    EmailAuthInput:
+      type: object
+      additionalProperties: false
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        name: { type: string, minLength: 2, maxLength: 100 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+        locale: { type: string, enum: [fi, en] }
+        challengeId: { type: string, minLength: 43, maxLength: 43 }
+        code: { type: string, pattern: "^[0-9]{6}$" }
+    AppSession:
+      type: object
+      required: [authenticated, user, csrfToken, loginAvailable]
+      properties:
+        authenticated: { type: boolean }
+        loginAvailable: { type: boolean }
+        emailLoginAvailable: { type: boolean, description: Email authentication is configured and its migration has been applied. }
+        accountCreated: { type: boolean, description: One-time server-confirmed new Google account event, never inferred from a sign-in. }
+        user:
+          anyOf:
+            - { $ref: "#/components/schemas/AppUser" }
+            - { type: "null" }
+        csrfToken: { type: [string, "null"] }
+    WebsiteProfileCapabilities:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+    CodeName:
+      type: object
+      required: [code, name]
+      properties:
+        code: { type: string }
+        name: { type: string }
+    MeasurementContext:
+      type: object
+      required: [markets, languages, excludedMarkets, notice]
+      properties:
+        markets: { type: array, items: { $ref: "#/components/schemas/CodeName" } }
+        languages: { type: array, items: { $ref: "#/components/schemas/CodeName" } }
+        excludedMarkets: { type: array, items: { type: string } }
+        notice: { type: string }
+    WebsiteProfileRequest:
+      type: object
+      required: [website, submissionId]
+      properties:
+        website: { type: string, minLength: 1, maxLength: 2048 }
+        submissionId: { type: string, format: uuid }
+        market: { type: string, minLength: 2, maxLength: 2 }
+        promptLanguage: { type: string, minLength: 2, maxLength: 2 }
+    WebsiteProfileJob:
+      type: object
+      required: [id, status, website, domain, createdAt]
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [queued, running, completed, failed] }
+        website: { type: string }
+        domain: { type: string }
+        market: { type: string }
+        promptLanguage: { type: string }
+        draft: { $ref: "#/components/schemas/ProjectInput" }
+        sources:
+          type: array
+          items: { type: string }
+        error: { type: string }
+        createdAt: { type: number }
+    ProjectInput:
+      type: object
+      required: [brandName, aliases, ownedDomains, categoryFi]
+      properties:
+        brandName: { type: string, minLength: 2, maxLength: 100 }
+        aliases:
+          type: array
+          maxItems: 8
+          items: { type: string, minLength: 2, maxLength: 100 }
+        ownedDomains:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items: { type: string }
+        categoryFi: { type: string, minLength: 8, maxLength: 240 }
+        market: { type: string, minLength: 2, maxLength: 2, description: "ISO 3166-1 alpha-2, default FI" }
+        promptLanguage: { type: string, minLength: 2, maxLength: 2, description: "ISO 639-1, default fi" }
+        category: { type: string, minLength: 8, maxLength: 240, description: "Neutral alias of categoryFi" }
+    ProjectRevision:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, minimum: 1 }
+    ProjectUpdate:
+      type: object
+      additionalProperties: false
+      required: [brandName, aliases, ownedDomains, categoryFi, expectedVersion]
+      properties:
+        brandName: { type: string, minLength: 2, maxLength: 100 }
+        aliases:
+          type: array
+          maxItems: 8
+          items: { type: string, minLength: 2, maxLength: 100 }
+        ownedDomains:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items: { type: string }
+        categoryFi: { type: string, minLength: 8, maxLength: 240 }
+        market: { type: string, minLength: 2, maxLength: 2, description: "ISO 3166-1 alpha-2, default FI" }
+        promptLanguage: { type: string, minLength: 2, maxLength: 2, description: "ISO 639-1, default fi" }
+        category: { type: string, minLength: 8, maxLength: 240, description: "Neutral alias of categoryFi" }
+        expectedVersion: { type: integer, minimum: 1 }
+    ProjectIdentity:
+      allOf:
+        - { $ref: "#/components/schemas/ProjectInput" }
+        - type: object
+          required: [version, createdAt]
+          properties:
+            version: { type: integer }
+            createdAt: { type: string }
+    Project:
+      allOf:
+        - { $ref: "#/components/schemas/ProjectIdentity" }
+        - type: object
+          required: [id, status, market, promptLanguage]
+          properties:
+            id: { type: string }
+            status: { type: string, enum: [active, archived] }
+            market: { type: string, description: "ISO 3166-1 alpha-2; defaults to FI" }
+            promptLanguage: { type: string, description: "ISO 639-1; defaults to fi" }
+    Preferences:
+      type: object
+      required: [locale, timezone, lastProjectId, version]
+      properties:
+        locale: { type: string, enum: [fi, en] }
+        timezone: { type: string }
+        lastProjectId: { type: [string, "null"] }
+        version: { type: integer }
+    PreferenceUpdate:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, minimum: 0 }
+        locale: { type: string, enum: [fi, en] }
+        timezone: { type: string }
+        lastProjectId: { type: [string, "null"] }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+

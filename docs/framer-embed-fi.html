@@ -1,0 +1,26 @@
+<!-- Liitä kerran Framerin Embed-elementtiin HTML-tilassa airank.me-sivustolla.
+     Julkaise ensin vastaava Replit-versio. Pidä H1, SEO-tekstit ja UKK Framerin natiiveina osioina. -->
+<div style="width:100%;max-width:1260px;margin:0 auto;">
+  <iframe id="airank-free-check-frame-fi"
+    src="https://app.airank.me/fi/free-check/embed?source=framer"
+    title="Maksuton tekoälynäkyvyyden tarkistus"
+    loading="lazy" scrolling="no" referrerpolicy="strict-origin-when-cross-origin"
+    style="display:block;width:100%;height:840px;border:0;overflow:hidden;background:transparent;"
+  ></iframe>
+</div>
+<script>
+(function () {
+  const frame = document.getElementById('airank-free-check-frame-fi');
+  if (!frame) return;
+  window.addEventListener('message', function (event) {
+    if (event.origin !== 'https://app.airank.me' || event.source !== frame.contentWindow) return;
+    const payload = event.data;
+    if (!payload || typeof payload !== 'object') return;
+    if (payload.type === 'airank:resize') {
+      const height = Number(payload.height);
+      if (Number.isFinite(height) && height >= 300 && height <= 10000) frame.style.height = Math.ceil(height) + 'px';
+    }
+    if (payload.type === 'airank:scroll-to-widget') frame.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+})();
+</script>

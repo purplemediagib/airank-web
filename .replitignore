@@ -1,0 +1,23 @@
+# The format of this file is identical to `.dockerignore`.
+# It is used to reduce the size of deployed images to make the process of publishing faster.
+
+# No need to store the pnpm store twice.
+.local
+/generated-artifacts/
+/attached_assets/0_airank-worker-0.11.0_1792129664191.zip
+.release-backend/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+cookies.json
+storage-state.json
+playwright/.auth/

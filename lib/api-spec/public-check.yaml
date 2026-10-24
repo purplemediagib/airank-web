@@ -1,0 +1,262 @@
+paths:
+  capabilities:
+    get:
+      operationId: publicCheckCapabilities
+      responses:
+        "200":
+          description: Anonymous catalog and availability
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckCapabilities" } } }
+  prepare:
+    post:
+      operationId: preparePublicCheckProfile
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckPrepareInput" } } }
+      responses:
+        "200":
+          description: AI suggestions requiring review
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckPreparedProfile" } } }
+  preview:
+    post:
+      operationId: previewPublicCheck
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckProfile" } } }
+      responses:
+        "200":
+          description: Reviewable neutral questions and configured providers
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckPreview" } } }
+  scans:
+    post:
+      operationId: startPublicCheck
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckStartInput" } } }
+      responses:
+        "202":
+          description: Idempotent submission to existing queue
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckStarted" } } }
+  scan:
+    parameters:
+      - { name: scanId, in: path, required: true, schema: { type: string } }
+      - { name: X-Scan-Token, in: header, required: true, schema: { type: string } }
+    get:
+      operationId: getPublicCheck
+      responses:
+        "200":
+          description: Progress or immutable terminal report
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckReport" } } }
+  email:
+    parameters:
+      - { name: scanId, in: path, required: true, schema: { type: string } }
+      - { name: X-Scan-Token, in: header, required: true, schema: { type: string } }
+    post:
+      operationId: emailPublicCheckReport
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckEmailInput" } } }
+      responses:
+        "200":
+          description: Optional idempotent email; independent marketing consent
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckDelivery" } } }
+  delivery:
+    parameters:
+      - { name: requestId, in: path, required: true, schema: { type: string } }
+      - { name: X-Scan-Token, in: header, required: true, schema: { type: string } }
+    get:
+      operationId: getPublicCheckDelivery
+      responses:
+        "200":
+          description: Provider-confirmed delivery state
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckDelivery" } } }
+  report:
+    parameters:
+      - { name: token, in: path, required: true, schema: { type: string, minLength: 43, maxLength: 43 } }
+    get:
+      operationId: getPublicCheckReport
+      responses:
+        "200":
+          description: Private no-store bearer report, expires after 30 days
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicCheckReport" } } }
+        "410": { description: Report access expired }
+components:
+  schemas:
+    PublicCheckCatalogItem:
+      type: object
+      required: [code, name]
+      properties:
+        code: { type: string }
+        name: { type: string }
+    PublicCheckCapabilities:
+      type: object
+      required: [enabled, emailEnabled, marketingEnabled, autofillEnabled, providers, promptCount, markets, languages, limits]
+      properties:
+        enabled: { type: boolean }
+        emailEnabled: { type: boolean }
+        marketingEnabled: { type: boolean }
+        autofillEnabled: { type: boolean }
+        providers: { type: array, items: { type: string } }
+        promptCount: { type: integer }
+        markets: { type: array, items: { $ref: "#/components/schemas/PublicCheckCatalogItem" } }
+        languages: { type: array, items: { $ref: "#/components/schemas/PublicCheckCatalogItem" } }
+        limits:
+          type: object
+          required: [guestScansPerDay, domainScansPerWeek]
+          properties:
+            guestScansPerDay: { type: integer }
+            domainScansPerWeek: { type: integer }
+    PublicCheckProfile:
+      type: object
+      required: [domain, brand_name, aliases, category_fi, market, language]
+      properties:
+        domain: { type: string, maxLength: 2048 }
+        brand_name: { type: string, minLength: 2, maxLength: 100 }
+        aliases: { type: array, maxItems: 8, items: { type: string, minLength: 2, maxLength: 100 } }
+        category_fi: { type: string, minLength: 8, maxLength: 240, description: Category in selected measurement language despite legacy field name }
+        market: { type: string }
+        language: { type: string }
+    PublicCheckPrepareInput:
+      type: object
+      required: [website, market, language]
+      properties:
+        website: { type: string, maxLength: 2048 }
+        market: { type: string }
+        language: { type: string }
+    PublicCheckPreparedProfile:
+      type: object
+      required: [draft, sources, model]
+      properties:
+        draft: { $ref: "#/components/schemas/PublicCheckProfile" }
+        model: { type: [string, "null"] }
+        sources:
+          type: array
+          items:
+            type: object
+            required: [url]
+            properties:
+              url: { type: string }
+    PublicCheckPreview:
+      type: object
+      required: [profile, prompts, providers, methodology, preview_hash, paid_calls]
+      properties:
+        profile: { $ref: "#/components/schemas/PublicCheckProfile" }
+        prompts: { type: array, items: { type: string } }
+        providers: { type: array, items: { type: string } }
+        methodology: { type: string }
+        preview_hash: { type: string }
+        paid_calls: { type: integer }
+    PublicCheckStartInput:
+      allOf:
+        - { $ref: "#/components/schemas/PublicCheckProfile" }
+        - type: object
+          required: [preview_hash, methodology, profile_confirmed, submission_id]
+          properties:
+            preview_hash: { type: string }
+            methodology: { type: string }
+            profile_confirmed: { type: boolean }
+            submission_id: { type: string, format: uuid }
+    PublicCheckStarted:
+      type: object
+      required: [id, status, scan_token]
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [queued] }
+        scan_token: { type: string }
+    PublicCheckEmailInput:
+      type: object
+      required: [email, marketingConsent, locale]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        marketingConsent: { type: boolean }
+        locale: { type: string, enum: [fi, en] }
+        resend: { type: boolean }
+    PublicCheckDelivery:
+      type: object
+      required: [requestId, status, marketingStatus]
+      properties:
+        requestId: { type: string }
+        status: { type: string, enum: [sending, sent, failed, uncertain, delivered, bounced] }
+        marketingStatus: { type: string, enum: [not_requested, pending, subscribed, failed, unavailable] }
+    PublicCheckScore:
+      type: object
+      required: [value, out_of, state, mentions, valid_answers, expected_answers, providers_requested, providers_measured, formula]
+      properties:
+        value: { type: [number, "null"] }
+        out_of: { type: number }
+        state: { type: string }
+        mentions: { type: integer }
+        valid_answers: { type: integer }
+        expected_answers: { type: integer }
+        providers_requested: { type: integer }
+        providers_measured: { type: integer }
+        formula: { type: string }
+    PublicCheckReport:
+      type: object
+      required: [id, domain, brand_name, status, created_at, finished_at, profile, score, prompts, observations, providers, progress, insight, methodology]
+      properties:
+        id: { type: string }
+        domain: { type: string }
+        brand_name: { type: string }
+        status: { type: string, enum: [queued, running, completed, partial, failed] }
+        created_at: { type: integer, description: Epoch milliseconds }
+        finished_at: { type: [integer, "null"], description: Epoch milliseconds }
+        profile: { $ref: "#/components/schemas/PublicCheckProfile" }
+        score: { $ref: "#/components/schemas/PublicCheckScore" }
+        methodology: { type: string }
+        progress:
+          type: object
+          required: [completed, expected]
+          properties:
+            completed: { type: integer }
+            expected: { type: integer }
+        insight:
+          type: object
+          required: [kind, mentions, valid_answers]
+          properties:
+            kind: { type: string, enum: [mentions, no_mentions, insufficient] }
+            mentions: { type: integer }
+            valid_answers: { type: integer }
+        prompts:
+          type: array
+          items:
+            type: object
+            required: [id, sequence, text]
+            properties:
+              id: { type: string }
+              sequence: { type: integer }
+              text: { type: string }
+        observations:
+          type: array
+          items:
+            type: object
+            required: [id, prompt_id, provider, model, status, response_text, brand_mentioned, citations]
+            properties:
+              id: { type: string }
+              prompt_id: { type: string }
+              provider: { type: string }
+              model: { type: [string, "null"] }
+              status: { type: string }
+              response_text: { type: [string, "null"] }
+              brand_mentioned: { type: integer }
+              citations:
+                type: array
+                items:
+                  type: object
+                  required: [url, domain]
+                  properties:
+                    url: { type: string }
+                    domain: { type: string }
+                    owned: { type: boolean }
+        providers:
+          type: array
+          items:
+            type: object
+            required: [provider, score, mentions, valid_answers, expected_answers, models, unavailable_answers]
+            properties:
+              provider: { type: string }
+              score: { type: [number, "null"] }
+              mentions: { type: integer }
+              valid_answers: { type: integer }
+              expected_answers: { type: integer }
+              models: { type: array, items: { type: string } }
+              unavailable_answers: { type: integer }

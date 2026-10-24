@@ -1,0 +1,15 @@
+{
+  "backendRepository": "https://github.com/purplemediagib/airank.me",
+  "revision": "b34d7c39231dd1e85a37385627f72a47a8d3c09e",
+  "probes": [
+    { "name": "api-health", "url": "https://mc-u87t7nkvtg.bunny.run/healthz", "service": "airank-api", "version": "0.22.0", "http": 200, "flag": "ok" },
+    { "name": "api-ready", "url": "https://mc-u87t7nkvtg.bunny.run/readyz", "http": 200, "flag": "ready" },
+    { "name": "monitoring-health", "url": "https://mc-0wuu8m6e4z.bunny.run/healthz", "service": "airank-worker", "version": "0.22.0", "http": 200, "flag": "ok" },
+    { "name": "monitoring-ready", "url": "https://mc-0wuu8m6e4z.bunny.run/readyz", "http": 200, "flag": "ready" },
+    { "name": "content-health", "url": "https://mc-a793cb4lba.bunny.run/health", "service": "airank-content-worker", "version": "1.0.0", "http": 200, "flag": "ready" },
+    { "name": "content-ready", "url": "https://mc-a793cb4lba.bunny.run/ready", "http": 200, "flag": "ready" },
+    { "name": "google-health", "url": "https://mc-kvj7j25914.bunny.run/health", "service": "airank-google-connector", "version": "0.2.0", "http": 200, "status": "ok" },
+    { "name": "web-proxy-health", "url": "https://app.airank.me/api/healthz", "http": 200, "status": "ok" },
+    { "name": "web-content-auth", "url": "https://app.airank.me/api/airank/v1/app/content-projects", "http": 401 }
+  ]
+}

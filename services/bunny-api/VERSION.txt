@@ -1,0 +1,4 @@
+AI Rank release 0.21.0 — intelligent workspace suggestions
+API: vtcarrie/bunny-mcp-connector:airank-api-0.21.0
+Worker: vtcarrie/bunny-mcp-connector:airank-worker-0.21.0
+Read WORKSPACE-SUGGESTIONS-RELEASE.md. Requires additive migration app-018.

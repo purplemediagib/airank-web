@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "AI Rank"
+description = "Finnish and English AI visibility monitoring application. Approved AI Rank Figma visual system; staged implementation preserving the existing Bunny backend."
+version = "1.0.0"
+id = "artifacts/airank"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25438
+
+[services.development]
+run = "pnpm --filter @workspace/airank run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/airank", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/airank/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25438"
+BASE_PATH = "/"

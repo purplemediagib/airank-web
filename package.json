@@ -1,0 +1,24 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "test:release": "node --test scripts/test/*.test.mjs && node --test artifacts/api-server/test/*.test.mjs && pnpm --filter @workspace/airank test",
+    "build:release": "pnpm run typecheck && PORT=5000 BASE_PATH=/ pnpm --filter @workspace/airank run build && pnpm --filter @workspace/api-server run build",
+    "check:live": "node scripts/check-release-readiness.mjs",
+    "lint": "prettier --check docs/API-CONTRACT.md docs/ARCHITECTURE-DECISIONS.md docs/BATCH-01-AUDIT.md docs/DEPLOYMENT.md docs/FIGMA-MAP.md docs/IMPLEMENTATION-STATUS.md docs/METHODOLOGY.md scripts/audit-baseline.mjs",
+    "test": "node scripts/audit-baseline.mjs && node --test services/bunny-api/test/*.test.mjs && node --test artifacts/api-server/test/*.test.mjs && pnpm --filter @workspace/airank test",
+    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+  },
+  "private": true,
+  "dependencies": {
+    "@replit/connectors-sdk": "^0.4.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3"
+  }
+}

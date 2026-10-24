@@ -1,0 +1,198 @@
+paths:
+  connection:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: service, in: path, required: true, schema: { type: string, enum: [ga4, gsc] } }
+    get:
+      operationId: getGoogleConnection
+      responses:
+        "200":
+          description: Authenticated connection state, or setup_required when server configuration is missing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GoogleConnectionStatus" }
+    delete:
+      operationId: disconnectGoogleConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GoogleEmptyInput" }
+      responses:
+        "200":
+          description: Connection credentials and imported data deleted; does not revoke Google grant
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GoogleDisconnectResult" }
+  connect:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: service, in: path, required: true, schema: { type: string, enum: [ga4, gsc] } }
+    post:
+      operationId: connectGoogleConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GoogleEmptyInput" }
+      responses:
+        "200":
+          description: One-use connector URL, valid for 120 seconds
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, expiresIn]
+                properties:
+                  url: { type: string }
+                  expiresIn: { type: integer }
+  properties:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: service, in: path, required: true, schema: { type: string, enum: [ga4, gsc] } }
+    get:
+      operationId: listGoogleProperties
+      responses:
+        "200":
+          description: Accessible GA4 properties or verified Search Console sites
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id]
+                      properties:
+                        id: { type: string }
+                        displayName: { type: string }
+                        accountName: { type: string }
+                        permissionLevel: { type: string }
+  selection:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: service, in: path, required: true, schema: { type: string, enum: [ga4, gsc] } }
+    put:
+      operationId: selectGoogleProperty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GooglePropertyInput" }
+      responses:
+        "200":
+          description: Selection saved and initial import queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [property, sync]
+                properties:
+                  property: { type: string }
+                  sync: { type: string }
+  sync:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: service, in: path, required: true, schema: { type: string, enum: [ga4, gsc] } }
+    post:
+      operationId: syncGoogleConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GoogleEmptyInput" }
+      responses:
+        "202":
+          description: Import queued or existing import resumed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string }
+  reports:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string } }
+      - { name: service, in: path, required: true, schema: { type: string, enum: [ga4, gsc] } }
+      - { name: startDate, in: query, required: true, schema: { type: string } }
+      - { name: endDate, in: query, required: true, schema: { type: string } }
+      - { name: view, in: query, schema: { type: string, enum: [overview, sources, totals, queries, pages, countries, devices] } }
+      - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+      - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 1000 } }
+      - { name: aiOnly, in: query, schema: { type: boolean } }
+    get:
+      operationId: getGoogleReports
+      responses:
+        "200":
+          description: Cached daily rows, not live Google requests. Rates must not be summed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GoogleReport" }
+components:
+  schemas:
+    GoogleEmptyInput:
+      type: object
+      additionalProperties: false
+    GooglePropertyInput:
+      type: object
+      required: [property]
+      additionalProperties: false
+      properties:
+        property: { type: string, minLength: 1, maxLength: 2048 }
+    GoogleConnectionStatus:
+      type: object
+      required: [configured, connected, status, service, email, property, timeZone, currency, connectedAt, sync]
+      properties:
+        configured: { type: boolean }
+        connected: { type: boolean }
+        status: { type: string }
+        service: { type: string, enum: [ga4, gsc] }
+        email: { type: [string, "null"] }
+        property: { type: [string, "null"] }
+        timeZone: { type: [string, "null"] }
+        currency: { type: [string, "null"] }
+        connectedAt: { type: [string, "null"] }
+        sync:
+          type: [object, "null"]
+          required: [status, completedDays, totalDays, lastError, completedAt]
+          properties:
+            status: { type: string }
+            completedDays: { type: integer }
+            totalDays: { type: integer }
+            lastError: { type: [string, "null"] }
+            completedAt: { type: [string, "null"] }
+    GoogleDisconnectResult:
+      type: object
+      required: [disconnected, importedDataDeleted, storedCredentialsDeleted, googleGrantRevoked]
+      properties:
+        disconnected: { type: boolean }
+        importedDataDeleted: { type: boolean }
+        storedCredentialsDeleted: { type: boolean }
+        googleGrantRevoked: { type: boolean }
+    GoogleReport:
+      type: object
+      required: [service, property, view, startDate, endDate, timeZone, currency, rows, totalRows, nextOffset, availableDates, missingDates, metadata, notes]
+      properties:
+        service: { type: string }
+        property: { type: [string, "null"] }
+        view: { type: string }
+        startDate: { type: string }
+        endDate: { type: string }
+        timeZone: { type: [string, "null"] }
+        currency: { type: [string, "null"] }
+        classificationVersion: { type: string }
+        rows:
+          type: array
+          items: { type: object, additionalProperties: true }
+        totalRows: { type: integer }
+        nextOffset: { type: [integer, "null"] }
+        availableDates: { type: array, items: { type: string } }
+        missingDates: { type: array, items: { type: string } }
+        metadata:
+          type: array
+          items: { type: object, additionalProperties: true }
+        notes: { type: array, items: { type: string } }

@@ -1,0 +1,13 @@
+.git
+.gitignore
+node_modules
+.env
+.env.*
+!.env.example
+*.zip
+*.tar
+.DS_Store
+.vscode
+coverage
+README*.md
+scripts

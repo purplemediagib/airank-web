@@ -1,0 +1,17 @@
+{
+  "credentialPatternMatches": 0,
+  "reviewedSyntheticInvalidUrlFixtures": 16,
+  "scannedPatternCategories": [
+    "anthropic-key",
+    "aws-access-key",
+    "credential-url",
+    "github-token",
+    "openai-key",
+    "private-key",
+    "stripe-live-secret"
+  ],
+  "scope": "All staged file bytes, including pinned backend reference",
+  "limitations": "Pattern scan is not a guarantee against every possible secret. No runtime values were read/exported.",
+  "sensitiveStateExcludedByPath": true,
+  "sourceOnly": true
+}

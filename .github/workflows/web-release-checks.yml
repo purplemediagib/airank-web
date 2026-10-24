@@ -1,0 +1,40 @@
+name: Web release checks (no deployment)
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10.26.1'
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:release
+      - run: pnpm run build:release
+      - name: Read reviewed backend source (not deployable workspace copies)
+        uses: actions/checkout@v4
+        with:
+          repository: purplemediagib/airank.me
+          ref: b34d7c39231dd1e85a37385627f72a47a8d3c09e
+          path: .release-backend
+          persist-credentials: false
+      - name: Verify actual Content Studio service offline
+        run: |
+          node --test .release-backend/app/test/content*.test.mjs
+          node artifacts/airank/test/scripts/offline-browser.mjs --check --content-source="$GITHUB_WORKSPACE/.release-backend/app"
+      # No production calls, provider keys, GitHub writes, or publishing in this workflow.
